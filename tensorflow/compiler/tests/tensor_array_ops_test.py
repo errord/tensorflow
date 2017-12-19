@@ -57,11 +57,13 @@ class TensorArrayTest(xla_test.XLATestCase):
       r0 = w2.read(0)
       r1 = w2.read(1)
       r2 = w2.read(2)
+      flow = w2.flow
 
-      d0, d1, d2 = session.run([r0, r1, r2])
+      d0, d1, d2, flow_val = session.run([r0, r1, r2, flow])
       self.assertAllEqual([[4.0, 5.0]], d0)
       self.assertAllEqual([[1.0, 3.0]], d1)
       self.assertAllEqual([[7.0, -8.5]], d2)
+      self.assertAllEqual([], flow_val.shape)
 
   def _testTensorArrayWritePack(self, tf_dtype):
     with self.test_session(), self.test_scope():
@@ -328,8 +330,7 @@ class TensorArrayTest(xla_test.XLATestCase):
     # Find two different floating point types, create an array of
     # the first type, but try to read the other type.
     if len(self.float_types) > 1:
-      dtype1 = self.float_types[0]
-      dtype2 = self.float_types[1]
+      dtype1, dtype2 = list(self.float_types)[:2]
       with self.test_session(), self.test_scope():
         ta = tensor_array_ops.TensorArray(
             dtype=dtype1, tensor_array_name="foo", size=3)
