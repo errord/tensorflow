@@ -69,6 +69,8 @@ class UnpackOp : public OpKernel {
                                  std::numeric_limits<Eigen::DenseIndex>::max()),
         errors::InvalidArgument("output size must fit in Eigen DenseIndex"));
 
+// This optimization is currently not applicable for SYCL devices
+#ifndef TENSORFLOW_USE_SYCL
     // Special case: Aligned, so we can share the underlying buffer.
     //
     // Apply this optimization conservatively: if input is aligned,
@@ -85,6 +87,7 @@ class UnpackOp : public OpKernel {
       }
       return;
     }
+#endif  // TENSORFLOW_USE_SYCL
 
     int64 before_dim = 1;
     for (int i = 0; i < axis; ++i) {
@@ -139,6 +142,7 @@ TF_CALL_ALL_TYPES(REGISTER_UNPACK);
       UnpackOp<GPUDevice, type>)
 
 TF_CALL_GPU_NUMBER_TYPES(REGISTER_GPU);
+TF_CALL_bfloat16(REGISTER_GPU);
 #undef REGISTER_GPU
 
 // A special GPU kernel for int32.

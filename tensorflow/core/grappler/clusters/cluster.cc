@@ -35,6 +35,10 @@ void Cluster::SetNumWarmupSteps(int num_steps) {
       num_steps);
 }
 
+int Cluster::NumWarmupSteps() const {
+  return options_.config.graph_options().build_cost_model_after();
+}
+
 void Cluster::DisableDetailedStats(bool disable) {
   if (disable) {
     options_.config.mutable_graph_options()->set_build_cost_model(0);
@@ -45,6 +49,10 @@ void Cluster::DisableDetailedStats(bool disable) {
   }
 }
 
+bool Cluster::DetailedStatsEnabled() const {
+  return options_.config.graph_options().build_cost_model() != 0;
+}
+
 void Cluster::DisableOptimizer(bool disable) {
   OptimizerOptions* options =
       options_.config.mutable_graph_options()->mutable_optimizer_options();
@@ -53,14 +61,18 @@ void Cluster::DisableOptimizer(bool disable) {
     // Disable Grappler optimizations.
     auto rewriter_config =
         options_.config.mutable_graph_options()->mutable_rewrite_options();
-    rewriter_config->set_optimize_tensor_layout(false);
+    rewriter_config->set_layout_optimizer(RewriterConfig::OFF);
     rewriter_config->set_disable_model_pruning(true);
-    rewriter_config->set_constant_folding(false);
+    rewriter_config->set_constant_folding(RewriterConfig::OFF);
     rewriter_config->set_memory_optimization(RewriterConfig::NO_MEM_OPT);
     rewriter_config->mutable_auto_parallel()->set_enable(false);
     rewriter_config->clear_optimizers();
   } else {
     options->set_opt_level(OptimizerOptions::L1);
+    auto rewriter_config =
+        options_.config.mutable_graph_options()->mutable_rewrite_options();
+    rewriter_config->set_constant_folding(RewriterConfig::DEFAULT);
+    rewriter_config->set_memory_optimization(RewriterConfig::DEFAULT_MEM_OPT);
   }
 }
 
